@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 
+
 class AiChatModel(BaseModel):
     project_id : int
     document_id : List[str] = []
