@@ -1,0 +1,3 @@
+[submodule "ai_module"]
+	path = ai_module
+	url = https://github.com/Refeat/refeat_AI.git
