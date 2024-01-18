@@ -1,1 +1,4 @@
+__pycache__/
 s3_mount
+**.pyc
+**.png

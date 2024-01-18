@@ -6,7 +6,8 @@ from typing import List, Optional
 class AiChatModel(BaseModel):
     project_id : int
     document_id : List[str] = []
-    history : List[Optional[List[str]]] = []
+    history : List[List[str]] = []
+    query: str
     
     
 class UploadDocumentDto(BaseModel):

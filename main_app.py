@@ -1,16 +1,27 @@
 ### fastapi app
+import sys
+import uuid
+
+sys.path.append("ai_module/src")
+
 from fastapi import FastAPI, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 import uvicorn
+from threading import Thread
 
 from backend import dto
 from backend.repository import document
 from backend.db import models
-from backend.db.database import engine, SessionLocal
+from backend.db.database import engine, get_db
+from backend.preset_class import required_classes
 
 from ai_module.src.modules.file_to_db.file_processor import FileProcessor
+from backend.threading_module.file_thread import trigger_file_thread
+from backend.threading_module.chat_thread import get_chat_stream
+from ai_module.src.modules.chat.custom_chat_agent_module import ChatAgentModule
 
-import uuid
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -20,41 +31,53 @@ main_modules = {}
 app = FastAPI()
 
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 @app.on_event("startup")
 def startup_event():
-    main_modules['file_processor'] = FileProcessor(save_dir="s3_mount/json", screenshot_dir="s3_mount/screenshot")
+    es = required_classes["CustomElasticSearch"]
+    es._create_index()  # delete index and create new index
+    main_modules["file_processor"] = FileProcessor(
+        es=es,
+        summary_chain=required_classes["SummaryChain"],
+        knowledge_graph_db=required_classes["KnowledgeGraphDatabase"],
+        save_dir="s3_mount/json/",
+        screenshot_dir="s3_mount/screenshot/",
+    )
+    main_modules["chat_agent"] = ChatAgentModule(verbose=True)
     print("startup")
-    
 
 
 @app.post("/aichat")
-def aichat():
-    pass
+def aichat(request: dto.AiChatModel, db: Session = Depends(get_db)):
+    return StreamingResponse(get_chat_stream(chat_agent=main_modules["chat_agent"],
+                                             project_id=request.project_id,
+                                             file_uuid=request.document_id,
+                                             chat_history=request.history,
+                                             query=request.query))
 
 
 @app.post("/document")
 def upload_document(request: dto.UploadDocumentDto, db: Session = Depends(get_db)):
     print(request)
-    document_instance = document.get_document_by_id(db, uuid.UUID(request.document_id).bytes )
-    print(document_instance.link)
-    document_path = "s3_mount/files/" + document_instance.link.split("files/")[-1]
+    if request.file_type.lower() == "pdf":
+        document_path = "s3_mount/files/" + request.path.split("files/")[-1]
+    else:
+        document_path = request.path
 
-    file_processor = main_modules['file_processor']
-    processor_data = file_processor.load_file(request.document_id, request.project_id, document_path)
-    title, favicon, screenshot_path = file_processor.get_title_favicon_screenshot_path(processor_data)
+    file_processor = main_modules["file_processor"]
+    processor_data = file_processor.load_file(
+        request.document_id, request.project_id, document_path
+    )
+    title, favicon, screenshot_path = file_processor.get_title_favicon_screenshot_path(
+        processor_data
+    )
     print(title)
     print(favicon)
     print(screenshot_path)
     
-    return {"message": "success"}
+    file_thread = Thread(target=trigger_file_thread, args=(file_processor, processor_data, request.project_id, request.document_id, db))
+    file_thread.start()
+
+    return {"title": title, "favicon": favicon}
 
 
 if __name__ == "__main__":

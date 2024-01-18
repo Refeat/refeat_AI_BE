@@ -69,5 +69,7 @@ class Document(Base):
     summary = Column(String(255))
     type = Column(Enum('WEB', 'PDF'))
     project = Column(ForeignKey('project.id'), index=True)
+    summary_done = Column(BIT(1))
+    embedding_done = Column(BIT(1))
 
     project1 = relationship('Project')
