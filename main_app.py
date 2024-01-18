@@ -18,7 +18,7 @@ from backend.preset_class import required_classes
 
 from ai_module.src.modules.file_to_db.file_processor import FileProcessor
 from backend.threading_module.file_thread import trigger_file_thread
-from backend.threading_module.chat_thread import get_chat_stream
+from backend.threading_module.chat_thread import get_chat_stream, get_dummy_stream
 from ai_module.src.modules.chat.custom_chat_agent_module import ChatAgentModule
 
 
@@ -34,7 +34,7 @@ app = FastAPI()
 @app.on_event("startup")
 def startup_event():
     es = required_classes["CustomElasticSearch"]
-    es._create_index()  # delete index and create new index
+    # es._create_index()  # delete index and create new index
     main_modules["file_processor"] = FileProcessor(
         es=es,
         summary_chain=required_classes["SummaryChain"],
@@ -42,7 +42,7 @@ def startup_event():
         save_dir="s3_mount/json/",
         screenshot_dir="s3_mount/screenshot/",
     )
-    main_modules["chat_agent"] = ChatAgentModule(verbose=True)
+    main_modules["chat_agent"] = ChatAgentModule(verbose=True, es=es, knowledge_graph_db=required_classes["KnowledgeGraphDatabase"])
     print("startup")
 
 
@@ -53,6 +53,10 @@ def aichat(request: dto.AiChatModel, db: Session = Depends(get_db)):
                                              file_uuid=request.document_id,
                                              chat_history=request.history,
                                              query=request.query))
+    
+@app.post("/aichat_dummy")
+def aichat_dummy():
+    return StreamingResponse(get_dummy_stream())
 
 
 @app.post("/document")
@@ -76,6 +80,7 @@ def upload_document(request: dto.UploadDocumentDto, db: Session = Depends(get_db
     
     file_thread = Thread(target=trigger_file_thread, args=(file_processor, processor_data, request.project_id, request.document_id, db))
     file_thread.start()
+    
 
     return {"title": title, "favicon": favicon}
 
