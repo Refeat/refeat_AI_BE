@@ -58,6 +58,10 @@ def aichat(request: dto.AiChatModel, db: Session = Depends(get_db)):
 def aichat_dummy():
     return StreamingResponse(get_dummy_stream())
 
+@app.get("/aichat_dummy")
+def aichat_dummys():
+    return StreamingResponse(get_dummy_stream())
+
 
 @app.post("/document")
 def upload_document(request: dto.UploadDocumentDto, db: Session = Depends(get_db)):

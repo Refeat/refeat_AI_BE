@@ -55,7 +55,7 @@ def get_dummy_stream():
     t.join()
     
 def generate_dummy_stream(queue: StreamingQueue):
-    for i in range(100):
+    for i in range(20):
         queue.append(str(i))
         time.sleep(0.2)
     
