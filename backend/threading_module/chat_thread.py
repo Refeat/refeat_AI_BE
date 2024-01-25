@@ -3,6 +3,7 @@ from typing import List
 from ai_module.src.modules.chat.custom_chat_agent_module import ChatAgentModule
 from .streaming_queue import StreamingQueue
 import time
+import asyncio
 
 
 def get_chat_stream(chat_agent: ChatAgentModule, query: str, file_uuid:List[str]=None, project_id=None, chat_history: List[List[str]]=[]):
@@ -13,21 +14,31 @@ def get_chat_stream(chat_agent: ChatAgentModule, query: str, file_uuid:List[str]
         chat_agent.run(query, file_uuid, project_id, chat_history, queue)
         queue.end_job()
         
-    start = time()
     t = Thread(target=chat_thread_task)
     t.start()
     
     while True:
+        time.sleep(0.1)
+        if not queue.is_document_end():
+            continue
+        else:
+            print(queue.document_list)
+            break
+    
+    while True:
+        time.sleep(0.1)
         if queue.is_end():
             print("streaming is ended")
             break
         ## 4개
-        if not queue.is_empty():
+        while not queue.is_empty():
             next_token = queue.get()
-            content += next_token
-            print(next_token)
+            # if type(next_token) == list:
+                
+            # content += next_token
+            print(next_token, end=" ")
             yield next_token
-            
+
     t.join()
     
 def get_dummy_stream():

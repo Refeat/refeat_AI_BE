@@ -5,8 +5,6 @@ from typing import List, Optional
 
 class AiChatModel(BaseModel):
     project_id : int
-    document_id : List[str] = []
-    history : List[List[str]] = []
     query: str
     
     
@@ -17,4 +15,6 @@ class UploadDocumentDto(BaseModel):
     file_type : str
      
       
-        
+class DeleteDocument(BaseModel):
+    project_id : int
+    document_id : str

@@ -1,6 +1,8 @@
 class StreamingQueue:
     def __init__(self):
         self.main_queue = list()
+        self.document_list = list()
+        self.document_flag = False
         self.end_flag = False
 
     def __len__(self):
@@ -15,6 +17,15 @@ class StreamingQueue:
         return and delete first object of queue
         """
         return self.main_queue.pop(0)
+    
+    def append_document_info(self, document_info):
+        self.document_list.append(document_info)
+        
+    def document_end(self):
+        self.document_flag = True
+        
+    def is_document_end(self):
+        return self.document_flag
 
     def end_job(self):
         self.end_flag = True
