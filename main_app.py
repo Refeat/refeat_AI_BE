@@ -23,6 +23,7 @@ from ai_module.src.modules.file_to_db.file_processor import FileProcessor
 from backend.threading_module.file_thread import trigger_file_thread
 from backend.threading_module.chat_thread import get_chat_stream, get_dummy_stream
 from ai_module.src.modules.chat.custom_chat_agent_module import ChatAgentModule
+from ai_module.src.modules.add_column.data_extract_module import AddColumnModule
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -45,6 +46,9 @@ def startup_event():
     )
     main_modules["chat_agent"] = ChatAgentModule(
         verbose=True, es=es, knowledge_graph_db=required_classes["KnowledgeGraphDatabase"]
+    )
+    main_modules["add_column"] = AddColumnModule(
+        es=es
     )
     print("startup")
 
@@ -84,6 +88,19 @@ def aichat_dummy():
 async def aichat_dummys():
     return StreamingResponse(get_dummy_stream(), media_type="text/event-stream")
 
+@app.post("/add_column")
+def add_column(request: dto.AddColumn):
+    column_module: AddColumnModule = main_modules["add_column"]
+    is_general = column_module.get_is_general_query(request.title)
+    return {"isGeneral": is_general}
+    
+@app.post("/get_column")
+def get_column(request: dto.GetColumn):
+    column_module: AddColumnModule = main_modules["add_column"]
+    file_uuid, column_value = column_module.get_column_value_by_file(column = request.title, 
+                                                                     file_uuid = request.document_id, 
+                                                                     is_general_query = request.is_general)
+    return {"documentId": file_uuid, "value": column_value}
 
 @app.post("/document")
 def upload_document(request: dto.UploadDocumentDto, db: Session = Depends(get_db)):

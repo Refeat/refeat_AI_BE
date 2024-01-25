@@ -9,12 +9,12 @@ def trigger_file_thread(file_processor: FileProcessor, data, project_id, documen
     
     print("start threading!!")
     start = time()
-    file_processor.process_data(data)
-    print("process data: ", time() - start)
     summary = file_processor.get_summary(data) # backend에서 가져가는 summary
     print("summary: ", time() - start)
     document.set_summary_done(db, document_id, summary)
     print('summary:', summary)
+    file_processor.process_data(data)
+    print("process data: ", time() - start)
     save_path = file_processor.get_save_path(data)
     print("path: ", time() - start)
     file_processor.save_data(data, save_path)

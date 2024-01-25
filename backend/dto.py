@@ -18,3 +18,13 @@ class UploadDocumentDto(BaseModel):
 class DeleteDocument(BaseModel):
     project_id : int
     document_id : str
+    
+
+class AddColumn(BaseModel):
+    title: str
+    
+    
+class GetColumn(BaseModel):
+    title: str
+    is_general: bool
+    document_id: str

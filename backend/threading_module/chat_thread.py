@@ -22,6 +22,7 @@ def get_chat_stream(chat_agent: ChatAgentModule, query: str, file_uuid:List[str]
         if not queue.is_document_end():
             continue
         else:
+            yield str(queue.document_list)
             print(queue.document_list)
             break
     
