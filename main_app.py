@@ -12,6 +12,7 @@ import requests
 from fastapi import FastAPI, Depends
 from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend import dto
 from backend.repository import document
@@ -21,7 +22,11 @@ from backend.preset_class import required_classes
 
 from ai_module.src.modules.file_to_db.file_processor import FileProcessor
 from backend.threading_module.file_thread import trigger_file_thread
-from backend.threading_module.chat_thread import get_chat_stream, get_dummy_stream
+from backend.threading_module.chat_thread import (
+    get_chat_stream,
+    get_dummy_stream,
+    get_dummy_stream_error,
+)
 from ai_module.src.modules.chat.custom_chat_agent_module import ChatAgentModule
 from ai_module.src.modules.add_column.data_extract_module import AddColumnModule
 
@@ -32,6 +37,19 @@ main_modules = {}
 app = FastAPI()
 auth_key_header = APIKeyHeader(name="Authorization")
 
+origins = [
+    "*",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 
 @app.on_event("startup")
 def startup_event():
@@ -41,15 +59,13 @@ def startup_event():
         es=es,
         summary_chain=required_classes["SummaryChain"],
         knowledge_graph_db=required_classes["KnowledgeGraphDatabase"],
-        save_dir="s3_mount/json/",
+        json_save_dir="s3_mount/json/",
         screenshot_dir="s3_mount/screenshot/",
     )
     main_modules["chat_agent"] = ChatAgentModule(
         verbose=True, es=es, knowledge_graph_db=required_classes["KnowledgeGraphDatabase"]
     )
-    main_modules["add_column"] = AddColumnModule(
-        es=es
-    )
+    main_modules["add_column"] = AddColumnModule(es=es)
     print("startup")
 
 
@@ -67,6 +83,8 @@ def aichat(
     )
     if response.status_code != 200:
         return response.json()
+    
+    print(response.json())
     # return response.json()
     return StreamingResponse(
         get_chat_stream(
@@ -75,6 +93,7 @@ def aichat(
             file_uuid=response.json()["data"]["reference"],
             chat_history=response.json()["data"]["history"],
             query=response.json()["data"]["query"],
+            db=db,
         )
     )
 
@@ -88,19 +107,27 @@ def aichat_dummy():
 async def aichat_dummys():
     return StreamingResponse(get_dummy_stream(), media_type="text/event-stream")
 
+
+@app.get("/aichat_error")
+async def aichat_dummys():
+    return StreamingResponse(get_dummy_stream_error(), media_type="text/event-stream")
+
+
 @app.post("/add_column")
 def add_column(request: dto.AddColumn):
     column_module: AddColumnModule = main_modules["add_column"]
     is_general = column_module.get_is_general_query(request.title)
     return {"isGeneral": is_general}
-    
+
+
 @app.post("/get_column")
 def get_column(request: dto.GetColumn):
     column_module: AddColumnModule = main_modules["add_column"]
-    file_uuid, column_value = column_module.get_column_value_by_file(column = request.title, 
-                                                                     file_uuid = request.document_id, 
-                                                                     is_general_query = request.is_general)
+    file_uuid, column_value = column_module.get_column_value_by_file(
+        column=request.title, file_uuid=request.document_id, is_general_query=request.is_general
+    )
     return {"documentId": file_uuid, "value": column_value}
+
 
 @app.post("/document")
 def upload_document(request: dto.UploadDocumentDto, db: Session = Depends(get_db)):
@@ -120,11 +147,13 @@ def upload_document(request: dto.UploadDocumentDto, db: Session = Depends(get_db
 
     file_thread = Thread(
         target=trigger_file_thread,
-        args=(file_processor, processor_data, request.project_id, request.document_id, db), daemon=True,
+        args=(file_processor, processor_data, request.project_id, request.document_id, db),
+        daemon=True,
     )
     file_thread.start()
 
     return {"title": title, "favicon": favicon}
+
 
 @app.post("/document/delete")
 def delete_document(request: dto.DeleteDocument):

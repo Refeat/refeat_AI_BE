@@ -1,7 +1,8 @@
 class StreamingQueue:
     def __init__(self):
         self.main_queue = list()
-        self.document_list = list()
+        self.content = ""
+        self.document_info = None
         self.document_flag = False
         self.end_flag = False
 
@@ -11,6 +12,7 @@ class StreamingQueue:
     def append(self, new_text):
         # print(new_text)
         self.main_queue.append(new_text)
+        self.content += new_text
 
     def get(self):
         """
@@ -18,8 +20,8 @@ class StreamingQueue:
         """
         return self.main_queue.pop(0)
     
-    def append_document_info(self, document_info):
-        self.document_list.append(document_info)
+    def set_document_info(self, document_info):
+        self.document_info = document_info
         
     def document_end(self):
         self.document_flag = True
