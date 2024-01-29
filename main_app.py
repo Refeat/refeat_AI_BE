@@ -13,12 +13,22 @@ from fastapi import FastAPI, Depends
 from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute, APIRouter
+from starlette.types import Message
+from starlette.background import BackgroundTask
+from starlette.requests import Request
+from starlette.responses import Response
+from typing import Any, Callable, Dict
 
 from backend import dto
-from backend.repository import document
+from backend.db.repository import document
 from backend.db import models
 from backend.db.database import engine, get_db
-from backend.preset_class import required_classes
+from refeat.backend.dependency.preset_class import required_classes
+from backend.route.custom_router import LoggingAPIRoute
+
+from backend.log.logger import logger
+
 
 from ai_module.src.modules.file_to_db.file_processor import FileProcessor
 from backend.threading_module.file_thread import trigger_file_thread
@@ -33,6 +43,7 @@ from ai_module.src.modules.add_column.data_extract_module import AddColumnModule
 models.Base.metadata.create_all(bind=engine)
 
 main_modules = {}
+
 
 app = FastAPI()
 auth_key_header = APIKeyHeader(name="Authorization")
@@ -50,6 +61,9 @@ app.add_middleware(
 )
 
 
+router = APIRouter(route_class=LoggingAPIRoute)
+
+
 
 @app.on_event("startup")
 def startup_event():
@@ -61,6 +75,7 @@ def startup_event():
         knowledge_graph_db=required_classes["KnowledgeGraphDatabase"],
         json_save_dir="s3_mount/json/",
         screenshot_dir="s3_mount/screenshot/",
+        html_save_dir="s3_mount/html/",
     )
     main_modules["chat_agent"] = ChatAgentModule(
         verbose=True, es=es, knowledge_graph_db=required_classes["KnowledgeGraphDatabase"]
@@ -69,8 +84,8 @@ def startup_event():
     print("startup")
 
 
-@app.post("/aichat")
-def aichat(
+@router.post("/aichat")
+async def aichat(
     request: dto.AiChatModel, db: Session = Depends(get_db), token: str = Depends(auth_key_header)
 ):
     print(request.query)
@@ -90,7 +105,7 @@ def aichat(
         get_chat_stream(
             chat_agent=main_modules["chat_agent"],
             project_id=request.project_id,
-            file_uuid=response.json()["data"]["reference"],
+            references=response.json()["data"]["reference"],
             chat_history=response.json()["data"]["history"],
             query=response.json()["data"]["query"],
             db=db,
@@ -98,29 +113,29 @@ def aichat(
     )
 
 
-@app.post("/aichat_dummy")
+@router.post("/aichat_dummy")
 def aichat_dummy():
     return StreamingResponse(get_dummy_stream(), media_type="text/event-stream")
 
 
-@app.get("/aichat_dummy")
+@router.get("/aichat_dummy")
 async def aichat_dummys():
     return StreamingResponse(get_dummy_stream(), media_type="text/event-stream")
 
 
-@app.get("/aichat_error")
+@router.get("/aichat_error")
 async def aichat_dummys():
     return StreamingResponse(get_dummy_stream_error(), media_type="text/event-stream")
 
 
-@app.post("/add_column")
+@router.post("/add_column")
 def add_column(request: dto.AddColumn):
     column_module: AddColumnModule = main_modules["add_column"]
     is_general = column_module.get_is_general_query(request.title)
     return {"isGeneral": is_general}
 
 
-@app.post("/get_column")
+@router.post("/get_column")
 def get_column(request: dto.GetColumn):
     column_module: AddColumnModule = main_modules["add_column"]
     file_uuid, column_value = column_module.get_column_value_by_file(
@@ -128,10 +143,13 @@ def get_column(request: dto.GetColumn):
     )
     return {"documentId": file_uuid, "value": column_value}
 
+import cProfile
 
-@app.post("/document")
+@router.post("/document")
 def upload_document(request: dto.UploadDocumentDto, db: Session = Depends(get_db)):
     print(request)
+    # pr = cProfile.Profile()
+    # pr.enable()
     if request.file_type.lower() == "pdf":
         document_path = "s3_mount/files/" + request.path.split("files/")[-1]
     else:
@@ -151,16 +169,18 @@ def upload_document(request: dto.UploadDocumentDto, db: Session = Depends(get_db
         daemon=True,
     )
     file_thread.start()
+    # pr.disable()
+    # pr.dump_stats('profile_results.prof')
 
     return {"title": title, "favicon": favicon}
 
 
-@app.post("/document/delete")
+@router.post("/document/delete")
 def delete_document(request: dto.DeleteDocument):
-    file_processor = main_modules["file_processor"]
+    file_processor:FileProcessor = main_modules["file_processor"]
     file_processor.delete(request.document_id, request.project_id)
     return {"status": "success"}
 
-
+app.include_router(router)
 if __name__ == "__main__":
     uvicorn.run("main_app:app", host="0.0.0.0", port=8000, reload=True)
