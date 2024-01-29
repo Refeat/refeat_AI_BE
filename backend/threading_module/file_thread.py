@@ -1,12 +1,14 @@
 from backend.db.database import get_db
 from sqlalchemy.orm import Session
 from ai_module.src.modules.file_to_db.file_processor import FileProcessor
-from backend.repository import document
+from backend.db.repository import document
 from time import time
 
+import cProfile
 
 def trigger_file_thread(file_processor: FileProcessor, data, project_id, document_id, db: Session = get_db):
-    
+    # pr = cProfile.Profile()
+    # pr.enable()
     print("start threading!!")
     start = time()
     summary = file_processor.get_summary(data) # backend에서 가져가는 summary
@@ -25,3 +27,5 @@ def trigger_file_thread(file_processor: FileProcessor, data, project_id, documen
     print("save graph: ", time() - start)
     document.set_embedding_done(db, document_id)
     print("finish embedding")
+    # pr.disable()
+    # pr.dump_stats('profile_results_document.prof')

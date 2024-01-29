@@ -1,35 +1,38 @@
-from threading import Thread
-from typing import List
+from threading import Thread, Event
+from typing import List, Dict
 from ai_module.src.modules.chat.custom_chat_agent_module import ChatAgentModule
 from .streaming_queue import StreamingQueue
 from sqlalchemy.orm import Session
-from backend.repository import chat
+from backend.db.repository import chat
 import time
 import asyncio
 
 
-def get_chat_stream(chat_agent: ChatAgentModule, query: str, file_uuid:List[str]=None, project_id=None, chat_history: List[List[str]]=[], db:Session=None):
+def get_chat_stream(chat_agent: ChatAgentModule, query: str, references:List[Dict[str,str]]=None,project_id=None, chat_history: List[List[str]]=[], db:Session=None):
+    file_uuid = []
+    file_name = dict()
+    for ref in references:
+        file_uuid.append(ref["id"])
+        file_name[ref["id"]] = ref["name"]
     print("get_chat_stream", query, file_uuid, project_id, chat_history)
     queue = StreamingQueue()
-    content = ""
     def chat_thread_task():
-        chat_agent.run(query, file_uuid, project_id, chat_history, queue)
+        try:
+            chat_agent.run(query, file_uuid, project_id, chat_history, queue)
+        except Exception as e:
+            print(e)
+            queue.error()
+            raise Exception(e)
         queue.end_job()
         
-    t = Thread(target=chat_thread_task)
+        
+    t = Thread(target=chat_thread_task, daemon=True)
     t.start()
     
     while True:
         time.sleep(0.1)
-        if not queue.is_document_end():
-            continue
-        else:
-            yield str(queue.document_info)
-            print(queue.document_info)
-            break
-    
-    while True:
-        time.sleep(0.1)
+        if queue.is_error():
+            raise Exception
         if queue.is_end():
             print("streaming is ended")
             break
@@ -38,11 +41,20 @@ def get_chat_stream(chat_agent: ChatAgentModule, query: str, file_uuid:List[str]
             next_token = queue.get()
             # if type(next_token) == list:
 
-            print(next_token, end=" ")
+            # print(next_token, end=" ")
             yield next_token
+            
+    while True:
+        time.sleep(0.1)
+        if queue.is_error():
+            raise Exception
+        if queue.is_document_end():
+            break
+        
+    yield "&&document&&"
+    yield queue.get_document_info(file_name)
     chat.add_ai_chat(db, project_id, queue.content, queue.document_info)
 
-    t.join()
     
 def get_dummy_stream():
     queue = StreamingQueue()
@@ -66,7 +78,7 @@ def get_dummy_stream():
             next_token = queue.get()
             content += next_token
             
-            print(next_token)
+            # print(next_token)
             yield next_token
             
     t.join()
@@ -98,7 +110,7 @@ def get_dummy_stream_error():
             if count > 10:
                 raise Exception("error")
             count += 1
-            print(next_token)
+            # print(next_token)
             yield next_token
             
     t.join()

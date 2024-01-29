@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from ..db import models
+from .. import models
 from typing import List, Dict
 import json
 import uuid
