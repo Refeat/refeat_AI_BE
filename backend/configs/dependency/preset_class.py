@@ -25,6 +25,7 @@ class AiModules:
         if not cls._instance:
             cls._instance = super().__new__(cls)
             cls._initialize(cls)
+            print("Models initialized!")
         return cls._instance
     
     def _initialize(cls):
@@ -43,6 +44,7 @@ class AiModules:
             verbose=True, es=es, knowledge_graph_db=graph
         )
         cls.column_module: AddColumnModule = AddColumnModule(es=es)
+        
         
 
 def get_ai_module() -> AiModules:
