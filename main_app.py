@@ -24,8 +24,9 @@ from backend import dto
 from backend.db.repository import document
 from backend.db import models
 from backend.db.database import engine, get_db
-from refeat.backend.dependency.preset_class import required_classes
+from backend.dependency.preset_class import required_classes
 from backend.route.custom_router import LoggingAPIRoute
+from backend.route.chat import test_router
 
 from backend.log.logger import logger
 
@@ -182,5 +183,6 @@ def delete_document(request: dto.DeleteDocument):
     return {"status": "success"}
 
 app.include_router(router)
+app.include_router(test_router)
 if __name__ == "__main__":
     uvicorn.run("main_app:app", host="0.0.0.0", port=8000, reload=True)
