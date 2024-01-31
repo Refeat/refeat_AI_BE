@@ -22,7 +22,7 @@ class UserInfo(Base):
 
     id = Column(BigInteger, primary_key=True)
     email = Column(String(255))
-    nick_name = Column(String(255))
+    nickname = Column(String(255))
     password = Column(String(255))
     profile_image = Column(String(255))
     provider = Column(Enum('GOOGLE', 'NATIVE', 'APPLE', 'KAKAO', 'NAVER'))

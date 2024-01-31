@@ -1,9 +1,6 @@
 from sqlalchemy.orm import Session
 from .. import models
-from typing import List, Dict
-import json
-import uuid
-
+from typing import Dict
 
 def add_ai_chat(db: Session, project_id: str, chat: str, reference:Dict[str, Dict[str, int]]):
     document_list = list()
@@ -16,3 +13,7 @@ def add_ai_chat(db: Session, project_id: str, chat: str, reference:Dict[str, Dic
     db.add(db_chat)
     db.commit()
     return db_chat
+
+
+
+
