@@ -30,9 +30,6 @@ async def aichat(
     token: str = Depends(auth_key_header),
     models: AiModules = Depends(AiModules)
 ):
-    print(request.query)
-    print(token)
-
     response = requests.post(
         "http://192.168.0.124:8080/chat/aichat",
         json={"projectId": request.project_id, "query": request.query},

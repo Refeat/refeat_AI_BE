@@ -47,14 +47,15 @@ class Chat(Base):
     __tablename__ = 'chat'
 
     id = Column(BigInteger, primary_key=True)
-    content = Column(String(255))
+    content = Column(String(2048))
+    content_refined = Column(String(2048))
     name = Column(String(255))
     project = Column(ForeignKey('project.id'), index=True)
     user = Column(ForeignKey('user_info.id'), index=True)
     mention = Column(String(255))
     position = Column(String(255))
     reference = Column(String(255))
-    created_at = Column(DATETIME(fsp=6), default=datetime.datetime.now())
+    created_at = Column(DATETIME(fsp=6))
 
     project1 = relationship('Project')
     user_info = relationship('UserInfo')

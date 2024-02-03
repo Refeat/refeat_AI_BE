@@ -31,7 +31,8 @@ class StreamingQueue:
         return self.document_flag
     
     def get_document_info(self, ref_name):
-        for key in self.document_info.keys():
+        print(self.document_info)
+        for key in self.document_info.keys():   
             self.document_info[key]["name"] = ref_name[key]
         return str(self.document_info)
 
