@@ -4,15 +4,8 @@ from ai_module.src.database.knowledge_graph.graph_construct import KnowledgeGrap
 from ai_module.src.modules.file_to_db.file_processor import FileProcessor
 from ai_module.src.modules.chat.custom_chat_agent_module import ChatAgentModule
 from ai_module.src.modules.add_column.data_extract_module import AddColumnModule
+from starlette.config import Config
 
-
-required_classes = {
-    "SummaryChain": SummaryChain(),
-    "CustomElasticSearch": CustomElasticSearch(
-        index_name="refeat_ai", host="http://10.10.10.27:9200"
-    ),
-    "KnowledgeGraphDatabase": KnowledgeGraphDataBase(),
-}
 
 
 class AiModules:
@@ -29,8 +22,11 @@ class AiModules:
         return cls._instance
     
     def _initialize(cls):
+        config = Config('.env')
+
+        ELASTICSEARCH_URL = config('ELASTICSEARCH_URL')
         summary_chain = SummaryChain()
-        es = CustomElasticSearch(index_name="refeat_ai", host="http://10.10.10.27:9200")
+        es = CustomElasticSearch(index_name="refeat_ai", host=ELASTICSEARCH_URL)
         graph = KnowledgeGraphDataBase()
         cls.file_processor: FileProcessor = FileProcessor(
             es=es,
