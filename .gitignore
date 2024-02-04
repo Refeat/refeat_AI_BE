@@ -3,4 +3,5 @@ s3_mount
 **.pyc
 **.png
 **.log
+info.log
 .env
