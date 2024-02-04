@@ -15,8 +15,11 @@ from backend.threading_module.chat_thread import (
     get_dummy_stream,
     get_dummy_stream_error,
 )
-
+from starlette.config import Config
 router = APIRouter(route_class=LoggingAPIRoute)
+config = Config('.env')
+
+BACKEND_URL = config('BACKEND_URL')
 
 
 @router.get("/injection_test")
@@ -31,7 +34,7 @@ async def aichat(
     models: AiModules = Depends(AiModules)
 ):
     response = requests.post(
-        "http://192.168.0.124:8080/chat/aichat",
+        f"{BACKEND_URL}/chat/aichat",
         json={"projectId": request.project_id, "query": request.query},
         headers={"Authorization": token},
     )
