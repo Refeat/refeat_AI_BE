@@ -40,6 +40,11 @@ def startup_event():
     scheduler.add_job(db_check, 'cron', minute='*/30', kwargs={"db": db})
     scheduler.start()
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+
 app.include_router(api_router)
 
 if __name__ == "__main__":
