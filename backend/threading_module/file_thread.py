@@ -2,6 +2,7 @@ from backend.db.database import get_db
 from sqlalchemy.orm import Session
 from ai_module.src.modules.file_to_db.file_processor import FileProcessor
 from backend.db.repository import document
+from ai_module.src.models.errors import error
 from time import time
 
 import cProfile
@@ -13,12 +14,23 @@ def trigger_file_thread(file_processor: FileProcessor, data, project_id, documen
     # pr.enable()
     print("start threading!!")
     start = time()
-    summary = file_processor.get_summary(data) # backend에서 가져가는 summary
-    print("summary: ", time() - start)
-    document.set_summary_done(db, document_id, summary)
-    print('summary:', summary)
-    file_processor.process_data(data)
-    print("process data: ", time() - start)
+    try: 
+        summary = file_processor.get_summary(data) # backend에서 가져가는 summary
+        print("summary: ", time() - start)
+        document.set_summary_done(db, document_id, summary)
+        print('summary:', summary)
+    except error.ChainRunError as e:
+        document.summary_fail()
+        print(e)
+        return
+    
+    try:
+        file_processor.process_data(data)
+        print("process data: ", time() - start)
+    except error.ChainRunError as e:
+        document.embedding_fail()
+        print(e)
+        return
     save_path = file_processor.get_save_path(data)
     print("path: ", time() - start)
     file_processor.save_data(data, save_path)

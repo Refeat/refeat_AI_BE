@@ -1,4 +1,4 @@
-from sqlalchemy import BINARY, BigInteger, Column, Enum, ForeignKey, Integer, String, DateTime
+from sqlalchemy import BINARY, BigInteger, Column, Enum, ForeignKey, Integer, String, DateTime, Text
 from sqlalchemy.dialects.mysql import BIT, DATETIME
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -56,6 +56,7 @@ class Chat(Base):
     position = Column(String(255))
     reference = Column(String(255))
     created_at = Column(DATETIME(fsp=6))
+    chunk_text = Column(Text())
 
     project1 = relationship('Project')
     user_info = relationship('UserInfo')
@@ -72,7 +73,8 @@ class Document(Base):
     summary = Column(String(1000))
     type = Column(Enum('WEB', 'PDF'))
     project = Column(ForeignKey('project.id'), index=True)
-    summary_done = Column(BIT(1))
-    embedding_done = Column(BIT(1))
+    save_done = Column(Integer)
+    summary_done = Column(Integer)
+    embedding_done = Column(Integer)
 
     project1 = relationship('Project')
