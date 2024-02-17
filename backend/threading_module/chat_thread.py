@@ -52,6 +52,7 @@ def get_chat_stream(chat_agent: ChatAgentModule, query: str, references:List[Dic
             break
         
     yield "&&document&&"
+    print(queue.get_document_info(file_name))
     yield queue.get_document_info(file_name)
     chat.add_ai_chat(db, project_id, queue.content, queue.document_info)
 

@@ -60,6 +60,15 @@ class Chat(Base):
 
     project1 = relationship('Project')
     user_info = relationship('UserInfo')
+    
+class Reference(Base):
+    __tablename__ = 'reference'
+
+    id = Column(Integer, primary_key=True)
+    index = Column(Integer)
+    document_id = Column(BINARY(16))
+    chunk = Column(Text())
+    chat = Column(ForeignKey('chat.id'), index=True)
 
 
 class Document(Base):

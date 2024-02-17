@@ -7,28 +7,26 @@ from time import time
 
 import cProfile
 
-
-
 def trigger_file_thread(file_processor: FileProcessor, data, project_id, document_id, db: Session = get_db):
     # pr = cProfile.Profile()
     # pr.enable()
     print("start threading!!")
     start = time()
     try: 
-        summary = file_processor.get_summary(data) # backend에서 가져가는 summary
+        summary = file_processor.get_summary(data, lang='ko') # backend에서 가져가는 summary
         print("summary: ", time() - start)
         document.set_summary_done(db, document_id, summary)
         print('summary:', summary)
-    except error.ChainRunError as e:
-        document.summary_fail()
+    except error.AIFailException as e:
+        document.summary_fail(db, document_id)
         print(e)
         return
     
     try:
         file_processor.process_data(data)
         print("process data: ", time() - start)
-    except error.ChainRunError as e:
-        document.embedding_fail()
+    except error.AIFailException as e:
+        document.embedding_fail(db, document_id)
         print(e)
         return
     save_path = file_processor.get_save_path(data)
