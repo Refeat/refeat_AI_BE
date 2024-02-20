@@ -27,6 +27,7 @@ class AiModules:
         ELASTICSEARCH_URL = config('ELASTICSEARCH_URL')
         summary_module = SummaryModule()
         es = CustomElasticSearch(index_name="refeat_ai", host=ELASTICSEARCH_URL)
+        es.initialize_index()
         graph = KnowledgeGraphDataBase()
         cls.file_processor: FileProcessor = FileProcessor(
             es=es,
