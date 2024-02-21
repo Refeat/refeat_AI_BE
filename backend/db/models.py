@@ -79,7 +79,7 @@ class Document(Base):
     favicon = Column(String(255))
     link = Column(String(255))
     name = Column(String(255))
-    summary = Column(String(1000))
+    summary = Column(Text())
     type = Column(Enum('WEB', 'PDF'))
     project = Column(ForeignKey('project.id'), index=True)
     save_done = Column(Integer)

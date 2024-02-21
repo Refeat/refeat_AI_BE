@@ -7,13 +7,13 @@ from time import time
 
 import cProfile
 
-def trigger_file_thread(file_processor: FileProcessor, data, project_id, document_id, db: Session = get_db):
+def trigger_file_thread(file_processor: FileProcessor, data, project_id, document_id, lang:str, db: Session = get_db):
     # pr = cProfile.Profile()
     # pr.enable()
     print("start threading!!")
     start = time()
     try: 
-        summary = file_processor.get_summary(data, lang='ko') # backend에서 가져가는 summary
+        summary = file_processor.get_summary(data, lang=lang.lower()) # backend에서 가져가는 summary
         print("summary: ", time() - start)
         document.set_summary_done(db, document_id, summary)
         print('summary:', summary)

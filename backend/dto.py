@@ -13,6 +13,7 @@ class UploadDocumentDto(BaseModel):
     document_id : str
     path : str
     file_type : str
+    lang: str
      
       
 class DeleteDocument(BaseModel):

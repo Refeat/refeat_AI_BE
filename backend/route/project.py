@@ -56,7 +56,7 @@ def upload_document(request: dto.UploadDocumentDto,
 
     file_thread = Thread(
         target=trigger_file_thread,
-        args=(file_processor, processor_data, request.project_id, request.document_id, db),
+        args=(file_processor, processor_data, request.project_id, request.document_id, request.lang, db),
         daemon=True,
     )
     file_thread.start()
