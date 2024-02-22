@@ -33,6 +33,8 @@ async def aichat(
     token: str = Depends(auth_key_header),
     models: AiModules = Depends(AiModules)
 ):
+    if request.query == "" or request.query == None:
+        return {}
     response = requests.post(
         f"{BACKEND_URL}/chat/aichat",
         json={"projectId": request.project_id, "query": request.query},
