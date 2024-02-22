@@ -33,7 +33,7 @@ async def aichat(
     token: str = Depends(auth_key_header),
     models: AiModules = Depends(AiModules)
 ):
-    if request.query == "" or request.query == None:
+    if request.query == "" or request.query == None or request.query.strip() == "<@1>":
         return {}
     response = requests.post(
         f"{BACKEND_URL}/chat/aichat",
