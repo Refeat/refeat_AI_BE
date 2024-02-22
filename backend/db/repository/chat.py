@@ -21,9 +21,7 @@ def add_ai_chat(db: Session, project_id: str, chat: str, reference: Dict[str, Di
         content_refined=chat,
         project=project_id,
         # reference=",".join(document_list),
-        # chunk_text="|".join(chunk_list),
         reference="",
-        chunk_text="",
         user=1,
         created_at=datetime.datetime.now(),
     )
@@ -33,7 +31,7 @@ def add_ai_chat(db: Session, project_id: str, chat: str, reference: Dict[str, Di
     
     for i in range(len(index_list)):
         reference = models.Reference(
-            index = index_list[i],
+            index_number = index_list[i],
             document_id = uuid.UUID(document_list[i]).bytes,
             chunk=chunk_list[i],
             chat = db_chat.id
