@@ -33,11 +33,11 @@ class AiModules:
             es=es,
             summary_module=summary_module,
             knowledge_graph_db=graph,
-            json_save_dir="s3_mount/json/",
-            screenshot_dir="s3_mount/screenshot/",
-            html_save_dir="s3_mount/html/",
-            pdf_save_dir="s3_mount/pdf/",
-            favicon_save_dir="s3_mount/favicon/",
+            json_save_dir="s3_mount/json",
+            screenshot_dir="s3_mount/screenshot",
+            html_save_dir="s3_mount/html",
+            pdf_save_dir="s3_mount/pdf",
+            favicon_save_dir="s3_mount/favicon",
         )
         cls.chat_agent: ChatAgentModule = ChatAgentModule(
             verbose=True, es=es, knowledge_graph_db=graph
