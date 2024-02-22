@@ -1,12 +1,13 @@
 from threading import Thread
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from backend.route.custom_router import LoggingAPIRoute
 from backend.configs.dependency.preset_class import AiModules
 from backend import dto
 from sqlalchemy.orm import Session
 from backend.db.database import get_db
+from backend.db.repository import document
 
 from backend.threading_module.file_thread import trigger_file_thread
 
@@ -47,12 +48,18 @@ def upload_document(request: dto.UploadDocumentDto,
         document_path = request.path
 
     file_processor = models.file_processor
-    processor_data = file_processor.load_file(
-        request.document_id, request.project_id, document_path
-    )
-    title, favicon, screenshot_path = file_processor.get_title_favicon_screenshot_path(
-        processor_data
-    )
+    
+    try:
+        processor_data = file_processor.load_file(
+            request.document_id, request.project_id, document_path
+        )
+        title, favicon, screenshot_path = file_processor.get_title_favicon_screenshot_path(
+            processor_data
+        )
+    except Exception as e:
+        document.save_fail(db, request.document_id)
+        print("save fail")
+        raise HTTPException(status_code=500, detail="save error")
 
     file_thread = Thread(
         target=trigger_file_thread,
