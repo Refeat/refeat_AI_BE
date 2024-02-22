@@ -57,6 +57,7 @@ def upload_document(request: dto.UploadDocumentDto,
             processor_data
         )
     except Exception as e:
+        print(e)
         document.save_fail(db, request.document_id)
         print("save fail")
         raise HTTPException(status_code=500, detail="save error")
