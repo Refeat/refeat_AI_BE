@@ -40,7 +40,7 @@ def startup_event():
     scheduler.add_job(db_check, 'cron', minute='*/30', kwargs={"db": db})
     scheduler.start()
 
-@app.get("/health")
+@app.get("/ai/health")
 def health_check():
     return {"status": "ok"}
 
