@@ -17,14 +17,14 @@ router = APIRouter(route_class=LoggingAPIRoute)
 
 
 
-@router.post("/add_column")
+@router.post("/ai/add_column")
 def add_column(request: dto.AddColumn,
                models: AiModules = Depends(AiModules)):
     is_general = models.column_module.get_is_general_query(request.title)
     return {"isGeneral": is_general}
 
 
-@router.post("/get_column")
+@router.post("/ai/get_column")
 def get_column(request: dto.GetColumn,
                models: AiModules = Depends(AiModules)):
 
@@ -35,7 +35,7 @@ def get_column(request: dto.GetColumn,
 
 import cProfile
 
-@router.post("/document")
+@router.post("/ai/document")
 def upload_document(request: dto.UploadDocumentDto, 
                     db: Session = Depends(get_db),
                     models: AiModules = Depends(AiModules)):
@@ -74,7 +74,7 @@ def upload_document(request: dto.UploadDocumentDto,
     return {"title": title, "favicon": favicon}
 
 
-@router.post("/document/delete")
+@router.post("/ai/document/delete")
 def delete_document(request: dto.DeleteDocument, models: AiModules = Depends(AiModules)):
     models.file_processor.delete(request.document_id, request.project_id)
     return {"status": "success"}
