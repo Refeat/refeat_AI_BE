@@ -40,9 +40,9 @@ class AiModules:
             favicon_save_dir="s3_mount/favicon",
         )
         cls.chat_agent: ChatAgentModule = ChatAgentModule(
-            verbose=True, es=es, knowledge_graph_db=graph
+            verbose=False, es=es, knowledge_graph_db=graph
         )
-        cls.column_module: AddColumnModule = AddColumnModule(es=es)
+        cls.column_module: AddColumnModule = AddColumnModule(es=es, verbose=False)
         
         
 

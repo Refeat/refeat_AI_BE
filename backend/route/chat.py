@@ -40,6 +40,7 @@ async def aichat(
         json={"projectId": request.project_id, "query": request.query},
         headers={"Authorization": token},
     )
+    
     if response.status_code != 200:
         return response.json()
     
